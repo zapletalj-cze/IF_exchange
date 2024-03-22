@@ -1,0 +1,28 @@
+from osgeo import gdal
+
+# Replace these with your values
+large_raster_filename = 'large_file.tif'
+reference_raster_filename = 'reference_file.tif'
+output_filename = 'min_composite.tif'
+
+# Build options with source files
+build_options = gdal.BuildVRTOptions()
+build_options.SetSeparate(True)  # Allow for in-place updates
+build_options.AddBandMapping((large_raster_filename, 1), (reference_raster_filename, 1))
+
+# Build the VRT
+subset_vrt = gdal.BuildVRTOptions(build_options).Build(output_filename)
+
+# Check for successful VRT creation
+if subset_vrt is None:
+    raise RuntimeError("Failed to create VRT")
+
+# Update VRT metadata for min function (assuming single band)
+subset_vrt.GetRasterBand(1).SetMetadataItem('PixelFunctionType', 'min')
+
+# Save the updated VRT as GeoTIFF
+driver = gdal.GetDriverByName('GTiff')
+driver.CopyDataset(subset_vrt, output_filename)
+
+# Close the VRT dataset
+subset_vrt = None
