@@ -43,3 +43,45 @@ driver.CopyDataset(subset_vrt, target_filename)
 large_raster = None
 small_raster = None
 subset_vrt = None
+
+from osgeo import gdal
+
+# Replace these with your values
+large_raster_filename = 'large_file.tif'
+subset_extent = (easting_min, northing_min, easting_max, northing_max)
+nodata_value = 99
+
+# Open the large and subset rasters
+large_raster = gdal.Open(large_raster_filename)
+subset_vrt = gdal.Open(subset_vrt_filename)  # Replace with your subset VRT filename
+
+# Check if subset VRT covers the entire subset extent
+if (
+    subset_vrt.RasterXSize < (subset_extent[2] - subset_extent[0])
+    or subset_vrt.RasterYSize < (subset_extent[3] - subset_extent[1])
+):
+    raise ValueError("Subset VRT does not cover the entire subset extent")
+
+# Set PixelFunctionType for the original large raster band
+large_raster_band = large_raster.GetRasterBand(1)
+large_raster_band.SetMetadataItem('PixelFunctionType', 'min')
+
+# Set source information for the large raster band with conditional expression
+source_info = f"{subset_vrt_filename},{nodata_value}"
+large_raster_band.SetMetadataItem('source_1', source_info)
+
+# Define source region for min function using metadata
+large_raster_band.SetMetadataItem('SourceRegion', 
+                         "%d,%d,%d,%d" % (subset_extent[0], subset_extent[1], subset_extent[2], subset_extent[3]))
+
+# Update the large raster with the minimum values
+large_raster.FlushCache()  # Ensure metadata updates are reflected
+
+# (Optional) Export the updated large raster to a new file
+target_filename = 'updated_large_file.tif'
+driver = gdal.GetDriverByName('GTiff')
+driver.CopyDataset(large_raster, target_filename)
+
+# Close datasets
+large_raster = None
+subset_vrt = None
