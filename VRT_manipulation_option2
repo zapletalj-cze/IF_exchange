@@ -1,1 +1,45 @@
 
+from osgeo import gdal
+
+# Replace these with your values
+large_raster_filename = 'large_file.tif'
+subset_extent = (easting_min, northing_min, easting_max, northing_max)
+small_raster_filename = 'small_file.tif'
+nodata_value = 99
+
+# Open large and small rasters
+large_raster = gdal.Open(large_raster_filename)
+small_raster = gdal.Open(small_raster_filename)
+
+# Check if small raster covers the entire subset extent
+if (
+    small_raster.RasterXSize < (subset_extent[2] - subset_extent[0])
+    or small_raster.RasterYSize < (subset_extent[3] - subset_extent[1])
+):
+    raise ValueError("Small raster does not cover the entire subset extent")
+
+# Create the subset VRT (ds1) directly using the VRT driver
+driver = gdal.GetDriverByName('VRT')
+subset_vrt = driver.Create('', large_raster.RasterXSize, large_raster.RasterYSize, 1)
+subset_vrt.SetGeoTransform(large_raster.GetGeoTransform())
+
+# Set VRT parameters for the subset
+band = subset_vrt.GetRasterBand(1)
+band.DataType = large_raster.GetRasterBand(1).DataType
+band.SetMetadata({'source_0': large_raster_filename})
+band.SetMetadataItem('source_1', str(1), 'Band')
+band.SetMetadataItem('Subset', 'YES')
+subset_vrt.SetMetadataItem('PixelFunctionType', 'min')  # Use min pixel function
+subset_vrt.SetMetadataItem('source_1', f"{small_raster_filename},{nodata_value}")  # Combine source and nodata
+
+# Update target GeoTIFF (optional, can be the same as large_raster_filename)
+target_filename = 'updated_large_file.tif'
+
+# Copy VRT data to target GeoTIFF
+driver = gdal.GetDriverByName('GTiff')
+driver.CopyDataset(subset_vrt, target_filename)
+
+# Close datasets
+large_raster = None
+small_raster = None
+subset_vrt = None
