@@ -1,0 +1,44 @@
+from osgeo import gdal, ogr
+
+def clip_raster(raster_path, mask_path, output_path):
+  """
+  Clips a raster by a mask using GDAL and OGR.
+
+  Args:
+      raster_path (str): Path to the input raster file.
+      mask_path (str): Path to the polygon mask file (e.g., shapefile).
+      output_path (str): Path to the output clipped raster file.
+  """
+
+  # Open the raster dataset
+  raster_ds = gdal.Open(raster_path)
+  if raster_ds is None:
+      raise Exception(f"Unable to open raster file: {raster_path}")
+
+  # Open the mask dataset
+  mask_ds = ogr.Open(mask_path)
+  if mask_ds is None:
+      raise Exception(f"Unable to open mask file: {mask_path}")
+
+  # Get the mask layer
+  mask_layer = mask_ds.GetLayer(0)
+
+  # Create a mask band based on the mask geometry
+  mask_band = gdal.GdalRasterBand(None, None)
+  gdal.RasterizeLayer(mask_band, [1], mask_layer, options=["BURN_VALUE=0", "ALL_TOUCHED=TRUE"])
+
+  # Clip the raster using the mask band
+  gdal.Translate(output_path, raster_ds, maskBand=mask_band)
+
+  # Close datasets
+  raster_ds = None
+  mask_ds = None
+
+# Example usage
+raster_path = "your_raster.tif"
+mask_path = "your_mask.shp"
+output_path = "clipped_raster.tif"
+
+clip_raster(raster_path, mask_path, output_path)
+
+print(f"Raster clipped successfully! Output: {output_path}")
