@@ -26,6 +26,12 @@ def clip_raster(raster_path, mask_path, output_path):
   # Create a mask band based on the mask geometry
   mask_band = gdal.GdalRasterBand(None, None)
   gdal.RasterizeLayer(mask_band, [1], mask_layer, options=["BURN_VALUE=0", "ALL_TOUCHED=TRUE"])
+  
+  # option B
+  gdal.RasterizeLayer(out_raster, [1], vector_layer, options=options)
+  options = ["INVERSE=TRUE"]
+
+
 
   # Clip the raster using the mask band
   gdal.Translate(output_path, raster_ds, maskBand=mask_band)
@@ -42,3 +48,13 @@ output_path = "clipped_raster.tif"
 clip_raster(raster_path, mask_path, output_path)
 
 print(f"Raster clipped successfully! Output: {output_path}")
+
+
+
+Zkusit jeste todle:
+
+    # Create rasterization options
+    options = gdal.RasterizeOptions(burnValues=[target_value], inverse=True)
+
+    # Rasterize the layer with the specified options
+    gdal.RasterizeLayer(output_raster, [1], layer, options=options)
