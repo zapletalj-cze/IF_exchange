@@ -76,3 +76,31 @@ block_size = 30  # Block size in meters (for both x and y directions)
 blocks = split_extent_to_blocks(extent, cell_size, block_size)
 print(blocks)
 
+x_min, y_min, x_max, y_max = extent
+
+  # Iterate through the extent row by row.
+  for y in range(y_min, y_max, block_size_y):
+    # Calculate how many cells fit in the remaining extent in X direction.
+    num_cells_x_in_row = int(math.ceil((x_max - x_min) / block_size_x))
+
+    # Iterate through the row column by column.
+    for x in range(x_min, x_max, block_size_x):
+      # Calculate how many cells fit in the remaining extent in Y direction.
+      num_cells_y_in_column = int(math.ceil((y_max - y) / block_size_y))
+
+      # Adjust block size if it doesn't fit in the remaining extent.
+      if x + block_size_x > x_max:
+        actual_block_size_x = x_max - x
+      else:
+        actual_block_size_x = block_size_x
+
+      if y + block_size_y > y_max:
+        actual_block_size_y = y_max - y
+      else:
+        actual_block_size_y = block_size_y
+
+      # Add block to the dictionary.
+      blocks[(x, y)] = (num_cells_x_in_row, actual_block_size_y)
+
+  return blocks
+
