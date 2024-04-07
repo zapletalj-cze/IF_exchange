@@ -1,0 +1,32 @@
+Drainage Layer
+
+Products are available in two spatial resolutions: 5 and 10 meters. The higher resolution is primarily intended for large cities. A script package has been created to generate the drainage layer from various data sources with land cover types represented  in vector format and water bodies in raster format.
+
+Input Data
+
+The inputs to the drainage layer consist of the following land cover types:
+
+Industrial estates
+Roads
+Parking areas
+Buildings
+Water bodies
+Waterways
+These can be sourced from the following data repositories:
+
+OpenStreetMap dataset – the script is modified for the use of data from the Geofabrik source, which must be downloaded locally.
+ESA World Cover – utilized to obtain a water mask in areas with lower-quality OpenStreetMap data.
+Other local datasets
+Additionally, regions where the drainage layer is to be created can be specified. They can be input as a regular grid (for a resolution of 5 meters) or a vector polygon dataset. Processing can occur in all regions, or a subset can be created based on a list of unique keys and an attribute name with a unique key.
+
+Settings
+
+Vector datasets can be rasterized using the 'all touched' algorithm, and a value can be determined for each object in the resulting raster. For each region, a buffer can be set in units. The default settings are as follows:
+
+Process
+
+A subset of data is created first by comparing the area covered by each input data with the specified areas. For each object type, only objects located within these areas are chosen. For datasets with higher resolutions, clustering of individual regions can be set to simplify the process (reducing iterations and temporary files).
+
+If the data source for roads is OpenStreetMap, a function filters the entire dataset, removing local roads, sidewalks, etc., and applies a buffer depending on the road type.
+
+For each region, a temporary raster in Memory format is created first, where values for individual objects from vector datasets are applied. Subsequently, the final result is created as a TIF file with ZSTD compression in the user-specified directory. For 5-meter resolution rasters, a backup of the previous version is created, and only the copy reflects changes. It's recommended to check the file for each run and replace it accordingly.
