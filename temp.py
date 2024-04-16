@@ -1,3 +1,8 @@
+  # Calculate window based on upper left corner and size
+  window_x_off = int(math.floor((x_upper_left - geo_transform[0]) / cell_size_x))
+  window_y_off = int(math.floor((y_upper_left - geo_transform[3]) / cell_size_y))
+  
+
 def split_extent_to_blocks(extent, cell_size_x, cell_size_y, block_size):
   """Splits an extent into blocks and returns a dictionary of block information.
 
