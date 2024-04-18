@@ -1,4 +1,36 @@
-  # Calculate window based on upper left corner and size
+import re
+import glob
+import os
+def extract_number(filename):
+    pattern = r"\d{4}"  # Matches exactly four digits
+    match = re.search(pattern, filename[12:17])  # Search within specific range
+    if match:
+        try:
+            return int(match.group(0))
+        except ValueError:
+            raise ValueError(f"Could not convert extracted string '{match.group(0)}' to integer")
+    else:
+        return None  # Indicate that no number was found
+tif_location = r'path_to_rasters'
+filenames = glob.glob(os.path.join((tif_location, '*.tif'))
+txt_file = r'path_to_textak'
+
+df_textak = pd.read_csv(txt_file, header=None)
+        
+for filename in filenames:
+    extracted_number = extract_number(filename)
+    if extracted_number is not None:
+        df_textak.loc[df_textak.iloc[:, 1] == extracted_number, -1] = filename
+
+        print(f"Extracted number from '{filename}': {extracted_number}")
+    else:
+        print(f"No number found in '{filename}'")
+
+
+
+
+
+# Calculate window based on upper left corner and size
   window_x_off = int(math.floor((x_upper_left - geo_transform[0]) / cell_size_x))
   window_y_off = int(math.floor((y_upper_left - geo_transform[3]) / cell_size_y))
   
