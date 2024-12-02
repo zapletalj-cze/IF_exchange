@@ -1,0 +1,44 @@
+function intpol_MQ_trend_2D(xd,yd,zd,x,y,s)
+
+% intterpolace multikvadrikou v 1D
+
+figure
+plot3(xd,yd,zd,'bo')
+hold on
+
+% x=linspace(min(xd),max(xd),50)
+% y=linspace(min(yd),max(yd),50)
+[Xg,Yg]=meshgrid(x,y); % pravouhla sit, X,Y jsou matice
+x=Xg(:); % prevedeme X na vektor x
+y=Yg(:);
+
+nd=length(xd)
+for i=1:nd
+    for j=1:nd
+        R(i,j)=sqrt((xd(i)-xd(j))^2+(yd(i)-yd(j))^2+s^2);
+    end
+end
+L=[R ones(nd,1); ones(1,nd) 0]
+P=[zd 0]';
+% L*X=P
+X=inv(L)*P
+a=X(1:nd)'
+b=X(nd+1)
+
+nx=length(x)
+for k=1:nx
+    for i=1:nd
+        r(i)=sqrt((xd(i)-x(k))^2+(yd(i)-y(k))^2+s^2);
+    end
+
+    z(k)=a*r'+b;
+
+    plot3(x(k),y(k),z(k),'r.')
+    pause(0.01)
+end
+
+Zg=reshape(z,size(Xg));
+surf(Xg,Yg,Zg) % vykreslime plochu
+alpha(0.5)
+
+grid on
