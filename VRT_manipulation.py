@@ -1,42 +1,33 @@
-from osgeo import gdal
-import geopandas as gpd
-from tools import get_extent_vector, align_extent_to_snap
-import sys
+import requests
+import base64
 
-large_raster_filename = r'D:\157_CanadaFlood_v3\impervious_areas_5m\big_rasters\TEST.tif'
-domain_test = r'D:\157_CanadaFlood_v3\impervious_areas_5m\small_area.gpkg'
-snap_raster = r'\\euprafapp003\FLST01\01_Projects\157_Canada_Flood_v3\01_MD\01_HAZARD\00_GIS\01_SnapRaster\snap_raster_60.tif'
-vrt_test = r'D:\157_CanadaFlood_v3\impervious_areas_5m\big_rasters\test.vrt'
+# Basic Auth credentials
+username = "your_lantmateriet_username"
+password = "your_lantmateriet_password"
+credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
 
-extent = get_extent_vector(domain_test)
-extent_snapped = align_extent_to_snap(extent, snap_raster, 5)
-print(extent_snapped)
-subset_extent = (extent_snapped[0], extent_snapped[2], extent_snapped[1], extent_snapped[3])
-nodata_value = 99
+# OGC API Features endpoint
+base_url = "https://features.lantmateriet.se/v1/hydrografi"  # Example URL
 
-# Open the large raster
-large_raster = gdal.Open(large_raster_filename)
+headers = {
+    "Authorization": f"Basic {credentials}"
+}
 
-# Create the subset VRT (ds1) directly using the VRT driver
-driver = gdal.GetDriverByName('VRT')
-subset_vrt = driver.Create('', large_raster.RasterXSize, large_raster.RasterYSize, 1)
-subset_vrt.SetGeoTransform(large_raster.GetGeoTransform())
+# Get capabilities/collections
+response = requests.get(f"{base_url}/", headers=headers)
+print(response.json())
 
-# Set VRT parameters for the subset
-band = subset_vrt.GetRasterBand(1)
-band.SetMetadataItem('Subset', 'YES')
-subset_vrt.SetMetadataItem('PixelFunctionType', 'complex')
-subset_vrt.SetMetadata({'SimpleSource': '<SourceFilename relativeToVRT="1">%s</SourceFilename>' % large_raster_filename})
-subset_vrt.SetMetadataItem('SourceRegion', "%d,%d,%d,%d" % (subset_extent[0], subset_extent[1], subset_extent[2], subset_extent[3]))
+# Query features with bbox (example: Västergötland region)
+bbox = "14.5,57.5,15.5,58.5"  # [minLon, minLat, maxLon, maxLat] in EPSG:4326
+params = {
+    "bbox": bbox,
+    "limit": 1000
+}
 
-# Update target GeoTIFF (optional, can be the same as large_raster_filename)
-target_filename = 'updated_large_file.tif'
+response = requests.get(
+    f"{base_url}/collections/waterways/items",
+    headers=headers,
+    params=params
+)
 
-# Copy VRT data to target GeoTIFF
-driver = gdal.GetDriverByName('GTiff')
-driver.CopyDataset(ds2_vrt, target_filename)
-
-# Close datasets
-ds1 = None
-ds2_vrt = None
-
+geojson_data = response.json()
